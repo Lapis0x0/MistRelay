@@ -5,6 +5,15 @@ echo "正在启动aria2c服务..."
 CONFIG_DIR="/app/aria2"
 mkdir -p $CONFIG_DIR
 
+# 从config.yml中读取RPC_SECRET
+if [ -f "/app/db/config.yml" ]; then
+    RPC_SECRET=$(grep "RPC_SECRET" /app/db/config.yml | cut -d ":" -f2 | tr -d ' ')
+    echo "已从config.yml中读取RPC_SECRET"
+else
+    echo "警告: 未找到config.yml文件，将使用默认RPC_SECRET"
+    RPC_SECRET="xxxxxxx"
+fi
+
 # 如果配置文件不存在，创建默认配置
 if [ ! -f "$CONFIG_DIR/aria2.conf" ]; then
     echo "创建aria2默认配置文件..."
@@ -34,13 +43,8 @@ retry-wait=0
 
 # RPC相关设置
 rpc-max-request-size=10M
+rpc-secret=${RPC_SECRET}
 EOF
-
-    # 从环境变量或配置文件获取RPC密钥
-    if [ -f "/app/db/config.yml" ]; then
-        RPC_SECRET=$(grep "RPC_SECRET" /app/db/config.yml | cut -d ":" -f2 | tr -d ' ')
-        echo "rpc-secret=$RPC_SECRET" >> "$CONFIG_DIR/aria2.conf"
-    fi
 fi
 
 # 后台启动aria2c

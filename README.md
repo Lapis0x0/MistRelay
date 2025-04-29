@@ -34,9 +34,9 @@ UP_ONEDRIVE: true                 # 是否启用rclone上传到OneDrive
 RCLONE_REMOTE: onedrive           # rclone配置的远程名称
 RCLONE_PATH: /Downloads           # OneDrive上的目标路径
 
-# aria2c设置
-RPC_SECRET: xxxxxxx               # RPC密钥
-RPC_URL: xxxxxx:6800/jsonrpc      # RPC地址
+# aria2c设置（Docker集成后可使用默认值）
+RPC_SECRET: xxxxxxx               # RPC密钥（建议修改为自定义密钥）
+RPC_URL: localhost:6800/jsonrpc   # RPC地址（使用Docker部署时通常不需要修改）
 
 # 代理设置（可选）
 PROXY_IP:                         # 代理IP，不需要则留空
@@ -61,7 +61,16 @@ rclone config
 cp ~/.config/rclone/rclone.conf ./rclone/
 ```
 
-#### 3. 使用Docker部署
+#### 3. 关于aria2c配置
+
+项目已经在Docker中集成了aria2c，您只需要在config.yml中设置：
+
+- `RPC_SECRET`: 这是aria2c的RPC密钥，用于安全访问。建议修改为自定义的强密码。
+- `RPC_URL`: 使用Docker部署时，通常保持默认值`localhost:6800/jsonrpc`即可。
+
+启动容器后，aria2c会自动配置并运行，您不需要单独安装或配置aria2c。
+
+#### 4. 使用Docker部署
 
 安装Docker和Docker Compose：
 
