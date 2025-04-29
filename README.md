@@ -55,21 +55,29 @@ AUTO_DELETE_AFTER_UPLOAD: true    # 是否在成功上传到OneDrive后自动删
 
 ### 2. 配置rclone
 
-将rclone配置文件（rclone.conf）放入项目的rclone目录中：
+由于VPS通常没有图形界面，无法直接完成OneDrive的OAuth认证流程，建议先在本地电脑上配置rclone，然后将配置文件上传到项目：
 
 ```bash
-# 如果还没有rclone目录，先创建一个
-mkdir -p rclone
+# 在本地电脑上安装rclone（如果尚未安装）
+# Windows: 下载安装包 https://rclone.org/downloads/
+# macOS: brew install rclone
+# Linux: curl https://rclone.org/install.sh | sudo bash
 
-# 安装rclone（如果尚未安装）
-curl https://rclone.org/install.sh | sudo bash
-
-# 配置rclone
+# 在本地电脑上配置rclone（会打开浏览器进行OneDrive授权）
 rclone config
 
-# 将生成的配置文件复制到项目的rclone目录
-cp ~/.config/rclone/rclone.conf ./rclone/
+# 配置完成后，在本地找到配置文件
+# Windows: %USERPROFILE%\.config\rclone\rclone.conf
+# macOS/Linux: ~/.config/rclone/rclone.conf
+
+# 在项目目录中创建rclone目录
+mkdir -p rclone
+
+# 将本地的配置文件复制到项目的rclone目录
+# 然后将此目录上传到您的VPS
 ```
+
+配置文件包含敏感的访问令牌，请妥善保管，不要分享给他人。
 
 ### 3. 关于aria2c配置
 
