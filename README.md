@@ -210,6 +210,6 @@ https://github.com/HouCoder/tele-aria2
 https://github.com/jw-star/aria2bot
 
 ## 五、未来计划
-[] 支持重命名文件
-[] 更清晰、强大的菜单键
-[] 支持通过大模型来自动管理文件列表
+- [ ] 支持重命名文件
+- [ ] 更清晰、强大的菜单键
+- [ ] 支持通过大模型来自动管理文件列表
