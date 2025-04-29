@@ -33,7 +33,25 @@ class AsyncAria2Client:
 
     async def connect(self):
         try:
-            self.websocket = await websockets.connect(self.ws_url, ping_interval=30)
+            # 从RPC_URL中提取主机和端口
+            url_parts = self.ws_url.split('/')
+            ws_protocol = url_parts[0].split(':')[0]  # 获取ws或wss
+            host_port = url_parts[2]  # 跳过ws://
+            path = '/'.join(url_parts[3:])
+            
+            # 如果主机名不是localhost或IP地址，则在Docker环境中使用localhost
+            if ':' in host_port:
+                host, port = host_port.split(':')
+                if not (host == 'localhost' or host == '127.0.0.1' or all(c.isdigit() or c == '.' for c in host)):
+                    # 在Docker环境中，使用localhost
+                    host = 'localhost'
+                host_port = f"{host}:{port}"
+            
+            # 重新构建完整URL
+            full_ws_url = f"{ws_protocol}://{host_port}/{path}"
+            
+            print(f"连接到aria2 WebSocket: {full_ws_url}")
+            self.websocket = await websockets.connect(full_ws_url, ping_interval=30)
             print("WebSocket连接成功")
             asyncio.ensure_future(self.listen())
         except Exception as e:
@@ -111,8 +129,25 @@ class AsyncAria2Client:
         return data['result']
 
     async def post_body(self, rpc_body):
+        # 从RPC_URL中提取主机和端口
+        url_parts = RPC_URL.split('/')
+        host_port = url_parts[0]
+        path = '/'.join(url_parts[1:])
+        
+        # 如果主机名不是localhost或IP地址，则在Docker环境中使用localhost
+        if ':' in host_port:
+            host, port = host_port.split(':')
+            if not (host == 'localhost' or host == '127.0.0.1' or all(c.isdigit() or c == '.' for c in host)):
+                # 在Docker环境中，使用localhost
+                host = 'localhost'
+            host_port = f"{host}:{port}"
+        
+        # 重新构建完整URL
+        full_url = f"http://{host_port}/{path}"
+        
+        print(f"连接到aria2 RPC: {full_url}")
         async with aiohttp.ClientSession() as session:
-            async with session.post(f'http://{RPC_URL}', json=rpc_body) as response:
+            async with session.post(full_url, json=rpc_body) as response:
                 return await response.json()
 
     async def re_connect(self):

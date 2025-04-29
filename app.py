@@ -20,9 +20,21 @@ from util import get_file_name, progress, byte2_readable, hum_convert
 coloredlogs.install(level='INFO')
 log = logging.getLogger('bot')
 
+# 如果RPC_URL中的主机名不是localhost或IP地址，则在Docker环境中使用localhost
+url_parts = RPC_URL.split(':')
+host = url_parts[0]
+if not (host == 'localhost' or host == '127.0.0.1' or all(c.isdigit() or c == '.' for c in host)):
+    # 在Docker环境中，使用localhost
+    host = 'localhost'
+    port_path = ':'.join(url_parts[1:])
+    docker_rpc_url = f"{host}:{port_path}"
+    print(f"在Docker环境中使用本地RPC URL: {docker_rpc_url}")
+else:
+    docker_rpc_url = RPC_URL
+
 proxy = (python_socks.ProxyType.HTTP, PROXY_IP, PROXY_PORT) if PROXY_IP is not None else None
 bot = TelegramClient('./db/bot', API_ID, API_HASH, proxy=proxy).start(bot_token=BOT_TOKEN)
-client = AsyncAria2Client(RPC_SECRET, f'ws://{RPC_URL}', bot)
+client = AsyncAria2Client(RPC_SECRET, f'ws://{docker_rpc_url}', bot)
 
 
 @bot.on(events.NewMessage(pattern="/start"))

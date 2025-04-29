@@ -17,6 +17,13 @@
 
 #### 1. 配置文件设置
 
+下载项目到本地：
+
+```bash
+git clone https://github.com/Lapis0x0/MistRelay.git
+cd MistRelay
+```
+
 重命名 `db/config.example.yml` 为 `config.yml` 并设置参数：
 
 ```yaml
@@ -36,7 +43,7 @@ RCLONE_PATH: /Downloads           # OneDrive上的目标路径
 
 # aria2c设置（Docker集成后可使用默认值）
 RPC_SECRET: xxxxxxx               # RPC密钥（建议修改为自定义密钥）
-RPC_URL: localhost:6800/jsonrpc   # RPC地址（使用Docker部署时通常不需要修改）
+RPC_URL: localhost:6800/jsonrpc   # 使用Docker部署时必须使用localhost或127.0.0.1
 
 # 代理设置（可选）
 PROXY_IP:                         # 代理IP，不需要则留空
@@ -66,7 +73,7 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 项目已经在Docker中集成了aria2c，您只需要在config.yml中设置：
 
 - `RPC_SECRET`: 这是aria2c的RPC密钥，用于安全访问。建议修改为自定义的强密码。
-- `RPC_URL`: 使用Docker部署时，通常保持默认值`localhost:6800/jsonrpc`即可。
+- `RPC_URL`: 使用Docker部署时必须使用localhost或127.0.0.1，端口号保持默认值6800即可。
 
 启动容器后，aria2c会自动配置并运行，您不需要单独安装或配置aria2c。
 
@@ -76,13 +83,6 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 
 ```bash
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh && systemctl enable docker && systemctl start docker
-```
-
-下载项目到本地：
-
-```bash
-git clone https://github.com/Lapis0x0/MistRelay.git
-cd MistRelay
 ```
 
 构建并启动容器：
@@ -96,6 +96,48 @@ docker compose up -d --build
 ```bash
 docker compose logs -f --tail=4000
 ```
+
+### 如何更新项目
+
+当有新版本发布时，您可以按照以下步骤更新项目：
+
+1. 备份您的配置文件和rclone配置：
+
+```bash
+# 备份配置文件
+cp db/config.yml db/config.yml.backup
+# 备份rclone配置
+cp rclone/rclone.conf rclone/rclone.conf.backup
+```
+
+2. 拉取最新代码：
+
+```bash
+# 获取最新代码
+git pull
+
+# 如果有冲突，可以先重置本地修改
+# git reset --hard
+# git pull
+```
+
+3. 重新构建并启动容器：
+
+```bash
+# 停止并删除旧容器
+docker compose down
+
+# 重新构建并启动
+docker compose up -d --build
+```
+
+4. 检查日志确认一切正常：
+
+```bash
+docker compose logs -f
+```
+
+如果更新后出现问题，您可以恢复备份的配置文件，然后重新构建容器。
 
 ### 使用方法
 
