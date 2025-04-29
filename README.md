@@ -2,7 +2,7 @@
 
 基于Telegram机器人的aria2下载控制系统，支持OneDrive自动上传
 
-### 特点
+## 一、特点
 
 1. 基于电报机器人控制aria2，可自行设置下载完成后的处理方式
 2. 支持下载完成后通过rclone自动上传到OneDrive
@@ -13,9 +13,9 @@
 7. 下载实时进度、上传实时进度显示
 8. Docker一键部署，集成aria2和rclone
 
-### 如何安装
+## 二、如何安装
 
-#### 1. 配置文件设置
+### 1. 配置文件设置
 
 下载项目到本地：
 
@@ -53,7 +53,7 @@ PROXY_PORT:                       # 代理端口，不需要则留空
 AUTO_DELETE_AFTER_UPLOAD: true    # 是否在成功上传到OneDrive后自动删除本地文件
 ```
 
-#### 2. 配置rclone
+### 2. 配置rclone
 
 将rclone配置文件（rclone.conf）放入项目的rclone目录中：
 
@@ -71,7 +71,7 @@ rclone config
 cp ~/.config/rclone/rclone.conf ./rclone/
 ```
 
-#### 3. 关于aria2c配置
+### 3. 关于aria2c配置
 
 项目已经在Docker中集成了aria2c，您只需要在config.yml中设置：
 
@@ -80,7 +80,7 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 
 启动容器后，aria2c会自动配置并运行，您不需要单独安装或配置aria2c。
 
-#### 4. 关于自动删除本地文件
+### 4. 关于自动删除本地文件
 
 项目支持在文件成功上传到OneDrive后自动删除本地文件，以节省存储空间：
 
@@ -91,7 +91,7 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 - 如果上传失败或中断，本地文件会保留
 - 对于大文件，系统会等待上传完全成功后才删除本地文件，不用担心上传过程中文件被删除
 
-#### 5. 关于OneDrive上传速度优化
+### 5. 关于OneDrive上传速度优化
 
 项目已经针对OneDrive上传速度进行了优化，使用了以下rclone参数：
 
@@ -108,7 +108,7 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 2. Microsoft对API请求的限制
 3. 服务器CPU或内存资源限制
 
-#### 6. 使用Docker部署
+### 6. 使用Docker部署
 
 安装Docker和Docker Compose：
 
@@ -128,7 +128,7 @@ docker compose up -d --build
 docker compose logs -f --tail=4000
 ```
 
-### 如何更新项目
+### 7.如何更新项目
 
 当有新版本发布时，您可以按照以下步骤更新项目：
 
@@ -170,7 +170,7 @@ docker compose logs -f
 
 如果更新后出现问题，您可以恢复备份的配置文件，然后重新构建容器。
 
-### 使用方法
+### 8.使用方法
 
 1. 在Telegram中找到您的机器人并发送 `/start` 命令
 2. 使用 `/help` 查看帮助信息
@@ -179,7 +179,7 @@ docker compose logs -f
 5. 使用 `/path` 命令设置下载目录
 6. 使用 `/web` 命令获取ariaNg在线控制地址
 
-### 命令列表
+### 9.命令列表
 
 - `/start` - 开始使用
 - `/help` - 查看帮助
@@ -187,7 +187,7 @@ docker compose logs -f
 - `/web` - 获取ariaNg在线地址
 - `/path [目录]` - 设置下载目录
 
-### 菜单功能
+### 10.菜单功能
 
 - ⬇️正在下载 - 查看正在下载的任务
 - ⌛️ 正在等待 - 查看等待中的任务
@@ -197,14 +197,19 @@ docker compose logs -f
 - ❌ 删除任务 - 删除选中的任务
 - ❌ ❌ 清空已完成/停止 - 清空所有已完成或停止的任务
 
-### 应用截图
+## 三、应用截图
 
 /help 查看帮助
 
 ![img.png](./img.png)
 
-### 灵感来源
+## 四、致谢
 
 https://github.com/HouCoder/tele-aria2
 
 https://github.com/jw-star/aria2bot
+
+## 五、未来计划
+[] 支持重命名文件
+[] 更清晰、强大的菜单键
+[] 支持通过大模型来自动管理文件列表
