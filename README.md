@@ -201,7 +201,7 @@ docker compose logs -f
 
 /help 查看帮助
 
-<img alt="img.png" height="400" src="./img.png" />
+![img.png](./img.png)
 
 ### 灵感来源
 
