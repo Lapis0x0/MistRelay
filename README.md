@@ -91,7 +91,24 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 - 如果上传失败或中断，本地文件会保留
 - 对于大文件，系统会等待上传完全成功后才删除本地文件，不用担心上传过程中文件被删除
 
-#### 5. 使用Docker部署
+#### 5. 关于OneDrive上传速度优化
+
+项目已经针对OneDrive上传速度进行了优化，使用了以下rclone参数：
+
+- `--transfers 32`: 增加并行传输数量
+- `--checkers 16`: 增加并行检查数量
+- `--onedrive-chunk-size 64M`: 增加OneDrive上传分块大小
+- `--buffer-size 64M`: 增加缓冲区大小
+- `--drive-pacer-min-sleep 10ms`: 减少API请求间隔
+- `--drive-pacer-burst 1000`: 增加爆发限制
+
+这些优化参数可以显著提高上传速度，特别是对于大文件。如果您仍然遇到上传速度慢的问题，可能是由于以下原因：
+
+1. 服务器到OneDrive的网络连接质量
+2. Microsoft对API请求的限制
+3. 服务器CPU或内存资源限制
+
+#### 6. 使用Docker部署
 
 安装Docker和Docker Compose：
 

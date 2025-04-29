@@ -363,7 +363,21 @@ class AsyncAria2Client:
                 
             # 构建rclone命令
             remote_path = f"{RCLONE_REMOTE}:{RCLONE_PATH}"
-            command = ["rclone", "copy", file_path, remote_path, "-P"]
+            command = [
+                "rclone", 
+                "copy", 
+                file_path, 
+                remote_path, 
+                "-P",
+                "--transfers", "32",        # 并行传输数量
+                "--checkers", "16",         # 并行检查数量
+                "--onedrive-chunk-size", "64M",  # OneDrive上传分块大小
+                "--buffer-size", "64M",     # 缓冲区大小
+                "--drive-pacer-min-sleep", "10ms",  # 最小休眠时间
+                "--drive-pacer-burst", "1000",      # 爆发限制
+                "--tpslimit", "10",         # 每秒事务数限制
+                "--tpslimit-burst", "10"    # 事务爆发限制
+            ]
             
             # 通知开始上传
             if self.bot:
