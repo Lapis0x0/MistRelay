@@ -369,14 +369,11 @@ class AsyncAria2Client:
                 file_path, 
                 remote_path, 
                 "-P",
-                "--transfers", "32",        # 并行传输数量
-                "--checkers", "16",         # 并行检查数量
-                "--onedrive-chunk-size", "64M",  # OneDrive上传分块大小
-                "--buffer-size", "64M",     # 缓冲区大小
-                "--drive-pacer-min-sleep", "10ms",  # 最小休眠时间
-                "--drive-pacer-burst", "1000",      # 爆发限制
-                "--tpslimit", "10",         # 每秒事务数限制
-                "--tpslimit-burst", "10"    # 事务爆发限制
+                "--transfers", "16",         # 并行传输数量（更保守）
+                "--checkers", "16",          # 并行检查数量
+                "--buffer-size", "32M",     # 缓冲区大小
+                "--log-level", "INFO",      # 日志级别
+                "--log-file", "/app/rclone.log"  # 日志文件
             ]
             
             # 通知开始上传
@@ -402,6 +399,10 @@ class AsyncAria2Client:
                         # 每5行更新一次消息，避免频繁更新
                         if hash(progress_info) % 5 == 0:
                             await self.bot.edit_message(msg, f'上传到OneDrive: {file_path}\n{progress_info}')
+                
+                # 记录错误信息
+                if "ERROR" in line:
+                    print(f"rclone错误: {line.strip()}")
             
             # 等待进程完成
             process.wait()
@@ -425,6 +426,24 @@ class AsyncAria2Client:
                 
                 return True
             else:
+                # 上传失败，记录详细错误信息
+                error_message = f"上传失败，返回码: {process.returncode}"
+                print(error_message)
+                
+                # 尝试读取日志文件中的最后几行错误
+                try:
+                    if os.path.exists("/app/rclone.log"):
+                        with open("/app/rclone.log", "r") as log_file:
+                            log_lines = log_file.readlines()
+                            last_errors = [line for line in log_lines[-20:] if "ERROR" in line]
+                            if last_errors:
+                                error_details = "\n".join(last_errors)
+                                print(f"rclone错误详情:\n{error_details}")
+                                if self.bot:
+                                    await self.bot.send_message(ADMIN_ID, f'上传错误详情:\n{error_details[:3000]}')
+                except Exception as e:
+                    print(f"读取日志文件失败: {e}")
+                
                 if self.bot:
                     await self.bot.edit_message(msg, f'上传到OneDrive失败: {file_path}')
                 return False
