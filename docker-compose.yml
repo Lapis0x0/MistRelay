@@ -7,7 +7,8 @@ services:
     restart: always
     volumes:
       - ./db:/app/db
-      - /root/downloads:/root/downloads
+      - /root/downloads:/root/downloads  # 下载目录
+      - ./rclone:/root/.config/rclone  # 项目内的rclone配置目录
       - /qqqq:/qqqq
     build: .
     environment:

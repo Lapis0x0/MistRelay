@@ -4,6 +4,7 @@ import functools
 import json
 import os
 import uuid
+import subprocess
 from datetime import datetime
 from pprint import pprint
 from typing import List, Dict, Any
@@ -11,7 +12,7 @@ from typing import List, Dict, Any
 import aiohttp
 import websockets
 
-from configer import ADMIN_ID, UP_TELEGRAM, RPC_URL, RPC_SECRET, FORWARD_ID
+from configer import ADMIN_ID, UP_TELEGRAM, RPC_URL, RPC_SECRET, FORWARD_ID, UP_ONEDRIVE, RCLONE_REMOTE, RCLONE_PATH
 from util import get_file_name, imgCoverFromFile, progress, byte2_readable, hum_convert
 
 
@@ -175,43 +176,54 @@ class AsyncAria2Client:
             path = file['path']
             if self.bot:
                 await self.bot.send_message(ADMIN_ID,
-                                            '下载完成===> ' + path,
+                                            '下载完成====> ' + path,
                                             )
-                if UP_TELEGRAM:
-                    if '[METADATA]' in path:
-                        os.unlink(path)
-                        return
-                    print('开始上传,路径文件:' + path)
-                    msg = await self.bot.send_message(ADMIN_ID,
-                                                      '上传中===> ' + path,
-                                                      )
-
-                    async def callback(current, total, gid):
-                        gid_progress = self.progress_cache.get(gid, 0)
-                        new_progress = current / total
-                        formatted_progress = "{:.2%}".format(new_progress)
-                        if abs(new_progress - gid_progress) >= 0.05:
-                            self.progress_cache[gid] = new_progress
-                            await self.bot.edit_message(msg, path + f' \n上传中 : {formatted_progress}')
-
+                # 处理元数据文件
+                if '[METADATA]' in path:
+                    os.unlink(path)
+                    return
+                
+                # 根据配置选择上传方式
+                if UP_ONEDRIVE:
+                    # 使用rclone上传到OneDrive
+                    await self.upload_to_onedrive(path)
+                elif UP_TELEGRAM:
+                    # 上传到Telegram的原有逻辑
                     try:
-                        # 单独处理mp4上传
-                        # 创建带有额外参数部分函数
-                        partial_callback = functools.partial(callback, gid=gid)
-                        if '.mp4' in path:
-                            pat, filename = os.path.split(path)
-                            # 截图
-                            await imgCoverFromFile(path, path + '.jpg')
-                            await self.bot.send_file(ADMIN_ID,
-                                                     path,
-                                                     thumb=pat + '/' + filename + '.jpg',
-                                                     supports_streaming=True,
-                                                     progress_callback=partial_callback
-                                                     )
+                        # 检查文件是否为图片
+                        if path.endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                            msg = await self.bot.send_message(ADMIN_ID, path + ' \n上传中 : 0%')
+                            partial_callback = functools.partial(self.callback, gid=gid, msg=msg, path=path)
+                            temp_msg = await self.bot.send_file(ADMIN_ID,
+                                                                path,
+                                                                progress_callback=partial_callback
+                                                                )
+                            if FORWARD_ID:
+                                await temp_msg.forward_to(int(FORWARD_ID))
+
+                            await msg.delete()
+                        # 检查文件是否为视频
+                        elif path.endswith(('.mp4', '.mkv', '.avi', '.mov')):
+                            pat = os.path.dirname(path)
+                            filename = os.path.basename(path).split('.')[0]
+                            # 生成视频封面
+                            imgCoverFromFile(path, pat + '/' + filename + '.jpg')
+                            msg = await self.bot.send_message(ADMIN_ID, path + ' \n上传中 : 0%')
+                            partial_callback = functools.partial(self.callback, gid=gid, msg=msg, path=path)
+                            temp_msg = await self.bot.send_file(ADMIN_ID,
+                                                                path,
+                                                                thumb=pat + '/' + filename + '.jpg',
+                                                                progress_callback=partial_callback
+                                                                )
+                            if FORWARD_ID:
+                                await temp_msg.forward_to(int(FORWARD_ID))
+
                             await msg.delete()
                             os.unlink(pat + '/' + filename + '.jpg')
                             os.unlink(path)
                         else:
+                            msg = await self.bot.send_message(ADMIN_ID, path + ' \n上传中 : 0%')
+                            partial_callback = functools.partial(self.callback, gid=gid, msg=msg, path=path)
                             temp_msg = await self.bot.send_file(ADMIN_ID,
                                                                 path,
                                                                 progress_callback=partial_callback
@@ -300,6 +312,81 @@ class AsyncAria2Client:
         rpc_body = self.get_rpc_body('aria2.getGlobalOption')
         data = await self.post_body(rpc_body)
         return data['result']
+
+    async def upload_to_onedrive(self, file_path):
+        """
+        使用rclone将文件上传到OneDrive
+        """
+        try:
+            if not os.path.exists(file_path):
+                print(f"文件不存在: {file_path}")
+                if self.bot:
+                    await self.bot.send_message(ADMIN_ID, f'文件不存在，无法上传到OneDrive: {file_path}')
+                return False
+                
+            # 构建rclone命令
+            remote_path = f"{RCLONE_REMOTE}:{RCLONE_PATH}"
+            command = ["rclone", "copy", file_path, remote_path, "-P"]
+            
+            # 通知开始上传
+            if self.bot:
+                msg = await self.bot.send_message(ADMIN_ID, f'开始上传到OneDrive: {file_path}')
+            
+            # 执行rclone命令
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True
+            )
+            
+            # 读取输出并更新进度
+            last_progress = ""
+            for line in process.stdout:
+                if "Transferred:" in line and self.bot:
+                    # 提取进度信息
+                    progress_info = line.strip()
+                    if progress_info != last_progress:
+                        last_progress = progress_info
+                        # 每5行更新一次消息，避免频繁更新
+                        if hash(progress_info) % 5 == 0:
+                            await self.bot.edit_message(msg, f'上传到OneDrive: {file_path}\n{progress_info}')
+            
+            # 等待进程完成
+            process.wait()
+            
+            # 检查上传是否成功
+            if process.returncode == 0:
+                if self.bot:
+                    await self.bot.edit_message(msg, f'成功上传到OneDrive: {file_path}')
+                return True
+            else:
+                if self.bot:
+                    await self.bot.edit_message(msg, f'上传到OneDrive失败: {file_path}')
+                return False
+                
+        except Exception as e:
+            print(f"上传到OneDrive时出错: {e}")
+            if self.bot:
+                await self.bot.send_message(ADMIN_ID, f'上传到OneDrive时出错: {e}')
+            return False
+
+    async def callback(self, current, total, gid, msg=None, path=None):
+        """
+        上传进度回调函数
+        """
+        if not msg or not path:
+            return
+            
+        gid_progress = self.progress_cache.get(gid, 0)
+        new_progress = current / total
+        formatted_progress = "{:.2%}".format(new_progress)
+        if abs(new_progress - gid_progress) >= 0.05:
+            self.progress_cache[gid] = new_progress
+            try:
+                await self.bot.edit_message(msg, path + f' \n上传中 : {formatted_progress}')
+            except Exception as e:
+                print(f"更新进度消息失败: {e}")
 
 
 async def main():

@@ -1,0 +1,3 @@
+# 忽略所有rclone配置文件
+rclone.conf
+*.conf
