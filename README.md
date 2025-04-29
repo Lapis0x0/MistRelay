@@ -48,6 +48,9 @@ RPC_URL: localhost:6800/jsonrpc   # 使用Docker部署时必须使用localhost�
 # 代理设置（可选）
 PROXY_IP:                         # 代理IP，不需要则留空
 PROXY_PORT:                       # 代理端口，不需要则留空
+
+# 自动删除本地文件设置
+AUTO_DELETE_AFTER_UPLOAD: true    # 是否在成功上传到OneDrive后自动删除本地文件
 ```
 
 #### 2. 配置rclone
@@ -77,7 +80,18 @@ cp ~/.config/rclone/rclone.conf ./rclone/
 
 启动容器后，aria2c会自动配置并运行，您不需要单独安装或配置aria2c。
 
-#### 4. 使用Docker部署
+#### 4. 关于自动删除本地文件
+
+项目支持在文件成功上传到OneDrive后自动删除本地文件，以节省存储空间：
+
+- `AUTO_DELETE_AFTER_UPLOAD`: 设置为true时，文件成功上传到OneDrive后会自动删除本地文件；设置为false时，保留本地文件。
+
+**注意**：
+- 只有在文件成功上传到OneDrive后才会删除本地文件
+- 如果上传失败或中断，本地文件会保留
+- 对于大文件，系统会等待上传完全成功后才删除本地文件，不用担心上传过程中文件被删除
+
+#### 5. 使用Docker部署
 
 安装Docker和Docker Compose：
 

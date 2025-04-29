@@ -12,7 +12,7 @@ from typing import List, Dict, Any
 import aiohttp
 import websockets
 
-from configer import ADMIN_ID, UP_TELEGRAM, RPC_URL, RPC_SECRET, FORWARD_ID, UP_ONEDRIVE, RCLONE_REMOTE, RCLONE_PATH
+from configer import ADMIN_ID, UP_TELEGRAM, RPC_URL, RPC_SECRET, FORWARD_ID, UP_ONEDRIVE, RCLONE_REMOTE, RCLONE_PATH, AUTO_DELETE_AFTER_UPLOAD
 from util import get_file_name, imgCoverFromFile, progress, byte2_readable, hum_convert
 
 
@@ -255,7 +255,8 @@ class AsyncAria2Client:
 
                             await msg.delete()
                             os.unlink(pat + '/' + filename + '.jpg')
-                            os.unlink(path)
+                            if AUTO_DELETE_AFTER_UPLOAD:
+                                os.unlink(path)
                         else:
                             msg = await self.bot.send_message(ADMIN_ID, path + ' \n上传中 : 0%')
                             partial_callback = functools.partial(self.callback, gid=gid, msg=msg, path=path)
@@ -267,7 +268,8 @@ class AsyncAria2Client:
                                 await temp_msg.forward_to(int(FORWARD_ID))
 
                             await msg.delete()
-                            os.unlink(path)
+                            if AUTO_DELETE_AFTER_UPLOAD:
+                                os.unlink(path)
 
                     except Exception as e:
                         print(e)
@@ -394,6 +396,19 @@ class AsyncAria2Client:
             if process.returncode == 0:
                 if self.bot:
                     await self.bot.edit_message(msg, f'成功上传到OneDrive: {file_path}')
+                
+                # 上传成功后删除本地文件
+                if AUTO_DELETE_AFTER_UPLOAD:
+                    try:
+                        os.unlink(file_path)
+                        print(f"已删除本地文件: {file_path}")
+                        if self.bot:
+                            await self.bot.send_message(ADMIN_ID, f'已删除本地文件: {file_path}')
+                    except Exception as e:
+                        print(f"删除本地文件失败: {e}")
+                        if self.bot:
+                            await self.bot.send_message(ADMIN_ID, f'删除本地文件失败: {e}')
+                
                 return True
             else:
                 if self.bot:

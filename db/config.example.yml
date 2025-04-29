@@ -10,9 +10,11 @@ UP_ONEDRIVE: true
 #rclone配置
 RCLONE_REMOTE: onedrive #rclone配置的远程名称
 RCLONE_PATH: /Downloads #OneDrive上的目标路径
+#是否在成功上传到OneDrive后自动删除本地文件
+AUTO_DELETE_AFTER_UPLOAD: true
 #aria2c 设置
 RPC_SECRET: xxxxxxx
-RPC_URL: xxxxxx:6800/jsonrpc
+RPC_URL: localhost:6800/jsonrpc
 
 #代理ip 不需要留空,目前代理只支持代理bot，aria2c 连接不支持代理目前
 PROXY_IP:

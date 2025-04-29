@@ -15,5 +15,7 @@ UP_TELEGRAM = result['UP_TELEGRAM']
 UP_ONEDRIVE = result.get('UP_ONEDRIVE', False)
 RCLONE_REMOTE = result.get('RCLONE_REMOTE', 'onedrive')
 RCLONE_PATH = result.get('RCLONE_PATH', '/Downloads')
+# 自动删除本地文件设置
+AUTO_DELETE_AFTER_UPLOAD = result.get('AUTO_DELETE_AFTER_UPLOAD', True)
 RPC_SECRET = result['RPC_SECRET']
 RPC_URL = result['RPC_URL']
